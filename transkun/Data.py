@@ -505,8 +505,9 @@ class DatasetMaestro:
             tMax = (np.iinfo(result.dtype)).max
             result = np.divide(result, tMax, dtype=np.float32)
 
-
-        #  readAudio
+        # Convert stereo to mono if needed (average channels)
+        if result.ndim == 2 and result.shape[1] > 1:
+            result = result.mean(axis=1, keepdims=True)
 
         return audioName, notes, result, fs
 
