@@ -442,6 +442,20 @@ class TransKun(torch.nn.Module):
 
         # then make forced predictions about velocity and refined onset offset
 
+        # Guard: if no intervals were predicted, skip velocity/OF computation
+        nIntervalsAll = sum(len(ints) for symInts in intervalsBatch for ints in symInts)
+        if nIntervalsAll == 0:
+            return {
+                "nGT": nGT,
+                "nEst": nEst,
+                "nCorrect": nCorrect,
+                "nGTFramewise": nGTFramewise,
+                "nEstFramewise": nEstFramewise,
+                "nCorrectFramewise": nCorrectFramewise,
+                "seVelocityForced": 0.0,
+                "seOFForced": 0.0,
+            }
+
         ctx_a_all, ctx_b_all, symIdx_all, scatterIdx_all = self.fetchIntervalFeaturesBatch(ctxBatch, intervalsBatch)
 
         attributeInput = torch.cat([ctx_a_all,
@@ -454,7 +468,7 @@ class TransKun(torch.nn.Module):
         logitsVelocity = self.velocityPredictor(attributeInput)
         pVelocity = F.softmax(logitsVelocity, dim = -1)
 
-        
+
         #MSE
         w = torch.arange(128, device = device)
         velocity = (pVelocity*w).sum(-1)
@@ -485,10 +499,10 @@ class TransKun(torch.nn.Module):
 
         stats = {
                 "nGT": nGT,
-                "nEst": nEst, 
+                "nEst": nEst,
                 "nCorrect": nCorrect,
                 "nGTFramewise": nGTFramewise,
-                "nEstFramewise": nEstFramewise, 
+                "nEstFramewise": nEstFramewise,
                 "nCorrectFramewise": nCorrectFramewise,
                 "seVelocityForced": seVelocity.item(),
                 "seOFForced": seOF.item(),

@@ -263,10 +263,10 @@ def doValidation(model, dataset, parallel, device):
         nCorrect= float(result[4])
 
      
-    meanNLLPerSecond = -logPAgg/lengthAgg
-    precision = nCorrect/nEst
-    recall = nCorrect/nGT
-    f1 = 2* precision*recall/(precision+recall)              
+    meanNLLPerSecond = -logPAgg/lengthAgg if lengthAgg > 0 else 0.0
+    precision = nCorrect/nEst if nEst > 0 else 0.0
+    recall = nCorrect/nGT if nGT > 0 else 0.0
+    f1 = 2*precision*recall/(precision+recall) if (precision+recall) > 0 else 0.0
 
 
     return {"meanNLL": meanNLLPerSecond, "precision": precision, "recall":recall, "f1": f1}

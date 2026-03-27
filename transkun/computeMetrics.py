@@ -42,6 +42,11 @@ def eval(args):
     # realign
     onsetDev = [d[1] for d in metrics["deviations"]]
     offsetDev = [d[2] for d in metrics["deviations"]]
+
+    if len(onsetDev) == 0:
+        # No matched notes — skip realignment, return metrics as-is
+        return metrics, audioName
+
     meanOnsetDev = sum(onsetDev)/len(onsetDev)
     meanOffsetDev = sum(offsetDev)/len(offsetDev)
 
