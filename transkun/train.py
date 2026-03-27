@@ -73,6 +73,18 @@ def train(workerId, nWorker, filename, runSeed, args):
     startEpoch, startIter, model,  lossTracker, best_state_dict, optimizer, lrScheduler= load_checkpoint(TransKun, conf, filename,device)
     print("#{} loaded".format(workerId))
 
+    # Freeze backbone if requested (for fine-tuning on new instruments)
+    backboneFrozen = False
+    if args.freezeBackbone > 0:
+        for param in model.framewiseFeatureExtractor.parameters():
+            param.requires_grad = False
+        for param in model.backbone.parameters():
+            param.requires_grad = False
+        backboneFrozen = True
+        if workerId == 0:
+            nFrozen = sum(1 for p in model.parameters() if not p.requires_grad)
+            nTotal = sum(1 for p in model.parameters())
+            print(f"Backbone frozen for {args.freezeBackbone} iterations ({nFrozen}/{nTotal} params frozen)")
 
     if workerId == 0:
         print("loading dataset....")
@@ -306,6 +318,15 @@ def train(workerId, nWorker, filename, runSeed, args):
                     print("saved")
 
             globalStep+= 1
+
+            # Unfreeze backbone after N iterations
+            if backboneFrozen and globalStep >= args.freezeBackbone:
+                for param in model.parameters():
+                    param.requires_grad = True
+                backboneFrozen = False
+                if workerId == 0:
+                    print(f"Backbone unfrozen at step {globalStep}")
+
             # torch.cuda.empty_cache()
 
 
@@ -383,6 +404,7 @@ if __name__ == '__main__':
     parser.add_argument('--augment',  action ="store_true", help="do data augmentation")
     parser.add_argument('--noiseFolder',  required = False)
     parser.add_argument('--irFolder',  required = False)
+    parser.add_argument('--freezeBackbone', type=int, default=0, help="freeze backbone for N iterations, only train scorer/velocity/OF heads")
 
 
 
