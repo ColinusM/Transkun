@@ -396,31 +396,20 @@ def readAudioSlice(audioPath, begin, end, normalize=True):
     if len(data.shape) == 1:
         data = data[:, np.newaxis]
 
-    # Convert stereo/multi-channel to mono by averaging channels
-    if data.shape[1] > 1:
-        data = data.mean(axis=1, keepdims=True)
-
     result = (data[max(b,0): min(e,l), :])
-
-    # print("-----------")
-    # print(dur, l, b, e)
-    # print(result.shape)
 
     # handle padding
     lPad = max(-b, 0)
     rPad = max(e-l, 0)
 
-    # print(lPad,rPad)
-
-
-
-    # print(e-b)
-    # print(result.shape)
-
     # normalize the audio to [-1,1] accoriding to the type
     if normalize:
         tMax = (np.iinfo(result.dtype)).max
         result = np.divide(result, tMax, dtype=np.float32)
+
+    # Convert stereo/multi-channel to mono (after normalization to avoid dtype issues)
+    if result.shape[1] > 1:
+        result = result.mean(axis=1, keepdims=True)
 
     if lPad >0 or rPad>0:
         result = np.pad(result,  ((lPad, rPad),(0,0)), 'constant')
