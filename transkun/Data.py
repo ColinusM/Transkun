@@ -377,20 +377,16 @@ def createDatasetMaestroCSV(datasetPath, datasetMetaCSVPath, extendSustainPedal=
     return samplesAll
 
 
-def readAudioSlice(audioPath, begin, end, normalize=True):
+def readAudioSlice(audioPath, begin, end, normalize=True, targetFs=44100):
     from scipy.io import wavfile
     import scipy.io
     fs, data = wavfile.read(audioPath, mmap = True)
-        
+
     b = math.floor((begin)*fs)
     e = math.floor(end*fs)
-    dur = e - b 
-    # dur = math.ceil((end-begin)*fs)
+    dur = e - b
     e = b+ dur
-    # print(dur)
 
-    # handle the case where b is negative
-    
     l = data.shape[0]
 
     if len(data.shape) == 1:
@@ -413,6 +409,13 @@ def readAudioSlice(audioPath, begin, end, normalize=True):
 
     if lPad >0 or rPad>0:
         result = np.pad(result,  ((lPad, rPad),(0,0)), 'constant')
+
+    # Resample to target sample rate if needed (e.g. 48kHz -> 44.1kHz)
+    if fs != targetFs:
+        from scipy.signal import resample
+        targetLen = int(result.shape[0] * targetFs / fs)
+        result = resample(result, targetLen, axis=0).astype(np.float32)
+        fs = targetFs
 
     return result, fs
 
@@ -930,9 +933,7 @@ def collate_fn_batching(batch):
     nAudioSamplesMin = min( [_.shape[0] for _ in audioSlices])
     nAudioSamplesMax = max( [_.shape[0] for _ in audioSlices])
 
-    # Relaxed: GAPS dataset has mixed sample rates causing minor length differences
-    # The truncation below handles this safely
-    assert nAudioSamplesMax-nAudioSamplesMin < 1000, f"Audio length mismatch too large: {nAudioSamplesMax} vs {nAudioSamplesMin}"
+    assert nAudioSamplesMax-nAudioSamplesMin < 2, f"Audio length mismatch: {nAudioSamplesMax} vs {nAudioSamplesMin}"
     
     audioSlices = [_[:nAudioSamplesMin] for _ in audioSlices]
 
