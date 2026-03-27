@@ -138,7 +138,7 @@ def initializeCheckpoint(Model,
                             rectify=True)
 
 
-    lrScheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr, nIter, pct_start = 0.05, cycle_momentum=False, final_div_factor = 2, div_factor = 20)
+    lrScheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=nIter, eta_min=1e-6)
 
     lossTracker = {'train': [], 'val': []}
     best_state_dict = copy.deepcopy(model.state_dict())
@@ -176,9 +176,7 @@ def load_checkpoint(Model, conf, filename,device, strict=False):
                             rectify=True)
 
 
-    # lrScheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, 2e-4, 100000, pct_start = 0.05, cycle_momentum=False, final_div_factor=2, div_factor = 20)
-    # lrScheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, 4e-4, 500000, pct_start = 0.05, cycle_momentum=False, final_div_factor=2, div_factor = 20)
-    lrScheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, 4e-4, 500000, pct_start = 0.05, cycle_momentum=False, final_div_factor=2, div_factor = 20)
+    lrScheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=500000, eta_min=1e-6)
      
     # debugging flag
     restartFromTheBest = False

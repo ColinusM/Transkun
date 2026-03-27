@@ -129,7 +129,7 @@ def train(workerId, nWorker, filename, runSeed, args):
         lossAll = []
 
         # curLRScheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr = 5e-5, max_lr = 1e-4, step_size_up = len(dataloader)//10*5, step_size_down = len(dataloader)//10*5, cycle_momentum=False)
-        globalStepWarmupCutoff = globalStep+500
+        globalStepWarmupCutoff = globalStep  # No warmup freeze for fine-tuning
 
         for idx, batch in enumerate(dataloader):
             if workerId ==0:
